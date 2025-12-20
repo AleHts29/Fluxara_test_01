@@ -25,7 +25,7 @@ func Load() {
 	once.Do(func() {
 		viper.SetConfigName("config")
 		viper.SetConfigType("json")
-		viper.AddConfigPath("../configs")
+		viper.AddConfigPath("./configs")
 
 		if err := viper.ReadInConfig(); err != nil {
 			fmt.Printf("Error reading config file\n")

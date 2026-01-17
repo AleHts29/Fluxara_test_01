@@ -1,7 +1,7 @@
 package domain
 
 type Server struct {
-	Host string        `mapstructure:"ip"`
+	Host string        `mapstructure:"host"`
 	Port string        `mapstructure:"port"`
 	TLS  TLSServerConf `mapstructure:"tls"`
 }

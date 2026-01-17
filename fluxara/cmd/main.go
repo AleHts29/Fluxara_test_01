@@ -3,6 +3,7 @@ package main
 import (
 	"fluxara/internal/adapters/rest"
 	"fluxara/internal/config"
+	"fmt"
 	"log"
 )
 
@@ -20,4 +21,6 @@ func main() {
 
 	handlers := rest.NewHandlers(nil)
 	rest.NewRouter(config.Get(), handlers)
+
+	fmt.Println("Esto es config", config.Get())
 }

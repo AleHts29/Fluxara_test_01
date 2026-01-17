@@ -2,7 +2,8 @@ package rest
 
 import (
 	"fluxara/internal/config"
-	serviceDb "fluxara/internal/services/repos/db"
+	serviceDb "fluxara/internal/services/repos"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -41,10 +42,10 @@ func (h *Handlers) RegisterHandler(method string, endopoint string, handler http
 }
 
 func NewRouter(configs *config.Config, handlers *Handlers) {
-	// s := Server{
-	// 	Host: configs.Server.Host,
-	// 	Port: configs.Server.Port,
-	// }
+	s := Server{
+		Host: configs.Server.Host,
+		Port: configs.Server.Port,
+	}
 
 	router := mux.NewRouter()
 	router.Use()
@@ -60,8 +61,8 @@ func NewRouter(configs *config.Config, handlers *Handlers) {
 	http.Handle("/", router)
 
 	// arranca el listener del server
-	// currentHost := fmt.Sprintf("%s:%s", s.Host, s.Port)
-	currentHost := "0.0.0.0:8099"
+	currentHost := fmt.Sprintf("%s:%s", s.Host, s.Port)
+	// currentHost := "0.0.0.0:8099"
 	log.Printf("Starting server %s\n", currentHost)
 	if err := http.ListenAndServe(currentHost, router); err != nil {
 		log.Panic("Error en ListenAdnServe")

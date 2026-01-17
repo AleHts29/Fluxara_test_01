@@ -16,10 +16,11 @@ func (h *Handlers) GetProduct() http.HandlerFunc {
 
 		vars := mux.Vars(r)
 		id := vars["id"] // id
+		fmt.Printf("Esto es id: %+v\n", id)
 
 		product, err := h.serviceDb.GetProduct(ctx, id)
 		if err != nil {
-			log.Panic("ERror en GetProduct")
+			log.Panic("Error en GetProduct")
 		}
 
 		fmt.Printf("Esto es product %+v \n", product)

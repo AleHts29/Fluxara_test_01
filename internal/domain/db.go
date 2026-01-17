@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Db struct {
 	Connection  string `mapstructure:"connection"`

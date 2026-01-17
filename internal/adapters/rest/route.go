@@ -2,7 +2,7 @@ package rest
 
 import (
 	"fluxara/internal/config"
-	serviceDb "fluxara/internal/services/repos"
+	serviceDb "fluxara/internal/services/repos/db"
 	"fmt"
 	"log"
 	"net/http"

@@ -84,6 +84,7 @@ func (dPQLDB *DbdAdapter) GetProduct(ctx context.Context, id string) (domain.Pro
 		AND is_active = true
 	`
 
+	ctx = context.Background()
 	err := dPQLDB.db.QueryRowContext(ctx, query, id).Scan(
 		&product.ID,
 		&product.SKU,

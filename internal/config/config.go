@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/joho/godotenv"
 	"github.com/spf13/viper"
 )
 
@@ -23,13 +24,12 @@ type Config struct {
 
 func Load() {
 	once.Do(func() {
-		viper.SetConfigFile(".env")
-		viper.AddConfigPath(".")
-		viper.AddConfigPath("..")
+		// 🔹 1) Cargar .env al entorno del sistema
+		if err := godotenv.Load(".env"); err != nil {
+			fmt.Println("No se pudo cargar .env (se usan env del sistema)")
+		}
 
 		viper.AutomaticEnv()
-
-		_ = viper.ReadInConfig()
 
 		cfg := Config{
 			Server: domain.Server{

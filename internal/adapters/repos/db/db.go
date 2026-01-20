@@ -105,3 +105,60 @@ func (dPQLDB *DbdAdapter) GetProduct(ctx context.Context, id string) (domain.Pro
 
 	return product, nil
 }
+
+func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context, id string,
+) ([]domain.Product, error) {
+
+	products := []domain.Product{}
+
+	query := `
+		SELECT
+			id,
+			sku,
+			name,
+			category,
+			price_cents,
+			stock,
+			is_active,
+			created_at
+		FROM public.products
+		WHERE id = $1
+		  AND is_active = true
+	`
+
+	rows, err := dPQLDB.db.QueryContext(ctx, query, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var product domain.Product
+
+		err := rows.Scan(
+			&product.ID,
+			&product.SKU,
+			&product.Name,
+			&product.Category,
+			&product.PriceCents,
+			&product.Stock,
+			&product.IsActive,
+			&product.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		products = append(products, product)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	if len(products) == 0 {
+		return nil, fmt.Errorf("no se encontraron productos")
+	}
+
+	return products, nil
+}

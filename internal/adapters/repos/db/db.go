@@ -106,10 +106,8 @@ func (dPQLDB *DbdAdapter) GetProduct(ctx context.Context, id string) (domain.Pro
 	return product, nil
 }
 
-func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context, id string,
-) ([]domain.Product, error) {
-
-	products := []domain.Product{}
+func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context) ([]domain.Product, error) {
+	var products []domain.Product
 
 	query := `
 		SELECT
@@ -122,11 +120,10 @@ func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context, id string,
 			is_active,
 			created_at
 		FROM public.products
-		WHERE id = $1
-		  AND is_active = true
+		WHERE is_active = true
 	`
 
-	rows, err := dPQLDB.db.QueryContext(ctx, query, id)
+	rows, err := dPQLDB.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
@@ -154,10 +151,6 @@ func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context, id string,
 
 	if err := rows.Err(); err != nil {
 		return nil, err
-	}
-
-	if len(products) == 0 {
-		return nil, fmt.Errorf("no se encontraron productos")
 	}
 
 	return products, nil

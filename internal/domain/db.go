@@ -26,3 +26,31 @@ type Product struct {
 	IsActive   bool
 	CreatedAt  time.Time
 }
+
+// arte
+type Career struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+}
+
+// /carreras/resumen
+type CareersResumen struct {
+	ID          int              `json:"id"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	Materias    []SubjectResumen `json:"subjects"`
+}
+
+type SubjectResumen struct {
+	ID          int                `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Profesores  []ProfessorResumen `json:"professors"`
+}
+
+type ProfessorResumen struct {
+	ID       int    `json:"id"`
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
+}

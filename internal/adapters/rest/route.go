@@ -27,8 +27,13 @@ func NewHandlers(serviceDb *serviceDb.DbService) *Handlers {
 	}
 
 	// registra handlers necesarios - los que se necesiten
-	h.RegisterHandler("GET", "/products", h.GetProductsAll())
-	h.RegisterHandler("GET", "/products/{id}", h.GetProduct())
+	// h.RegisterHandler("GET", "/products", h.GetProductsAll())
+	// h.RegisterHandler("GET", "/products/{id}", h.GetProduct())
+
+	// artes
+	h.RegisterHandler("GET", "/carreras", h.GetCarrerasAll())
+	h.RegisterHandler("GET", "/carreras-resumen", h.GetCarrerasResumen())
+	h.RegisterHandler("GET", "/carreras/{name}", h.GetCarrerasByName())
 	h.RegisterHandler("GET", "/ping", h.Ping())
 
 	return h

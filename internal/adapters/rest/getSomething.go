@@ -1,53 +1,43 @@
 package rest
 
-import (
-	"context"
-	"encoding/json"
-	"fmt"
-	"log"
-	"net/http"
+// func (h *Handlers) GetProductsAll() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		ctx := context.Background()
 
-	"github.com/gorilla/mux"
-)
+// 		vars := mux.Vars(r)
+// 		id := vars["id"] // id
+// 		fmt.Printf("Esto es id: %+v\n", id)
 
-func (h *Handlers) GetProductsAll() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+// 		product, err := h.serviceDb.GetProductsAll(ctx)
+// 		if err != nil {
+// 			log.Panic("Error en GetProduct")
+// 		}
 
-		vars := mux.Vars(r)
-		id := vars["id"] // id
-		fmt.Printf("Esto es id: %+v\n", id)
+// 		fmt.Printf("Esto es product %+v \n", product)
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.WriteHeader(http.StatusOK)
 
-		product, err := h.serviceDb.GetProductsAll(ctx)
-		if err != nil {
-			log.Panic("Error en GetProduct")
-		}
+// 		json.NewEncoder(w).Encode(product)
+// 	}
+// }
 
-		fmt.Printf("Esto es product %+v \n", product)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+// func (h *Handlers) GetProduct() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		ctx := context.Background()
 
-		json.NewEncoder(w).Encode(product)
-	}
-}
+// 		vars := mux.Vars(r)
+// 		id := vars["id"] // id
+// 		fmt.Printf("Esto es id: %+v\n", id)
 
-func (h *Handlers) GetProduct() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
+// 		product, err := h.serviceDb.GetProduct(ctx, id)
+// 		if err != nil {
+// 			log.Panic("Error en GetProduct")
+// 		}
 
-		vars := mux.Vars(r)
-		id := vars["id"] // id
-		fmt.Printf("Esto es id: %+v\n", id)
+// 		fmt.Printf("Esto es product %+v \n", product)
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.WriteHeader(http.StatusOK)
 
-		product, err := h.serviceDb.GetProduct(ctx, id)
-		if err != nil {
-			log.Panic("Error en GetProduct")
-		}
-
-		fmt.Printf("Esto es product %+v \n", product)
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-
-		json.NewEncoder(w).Encode(product)
-	}
-}
+// 		json.NewEncoder(w).Encode(product)
+// 	}
+// }

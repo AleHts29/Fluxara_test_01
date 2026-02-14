@@ -6,6 +6,10 @@ import (
 )
 
 type DbReporer interface {
-	GetProduct(ctx context.Context, id string) (domain.Product, error)
-	GetProductsAll(ctx context.Context) ([]domain.Product, error)
+	// GetProductsAll(ctx context.Context) ([]domain.Product, error)
+	// GetProduct(ctx context.Context, id string) (domain.Product, error)
+	// arte
+	GetCarrerasAll(ctx context.Context) ([]domain.Career, error)
+	GetCarrerasResumen(ctx context.Context) ([]domain.CareersResumen, error)
+	GetCarrerasByName(ctx context.Context, name string) (domain.Career, error)
 }

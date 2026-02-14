@@ -34,7 +34,7 @@ func NewHandlers(serviceDb *serviceDb.DbService) *Handlers {
 	h.RegisterHandler("GET", "/resumen-full", h.GetFullData())
 	h.RegisterHandler("GET", "/carreras", h.GetCarrerasAll())
 	// h.RegisterHandler("GET", "/catalogo-academico", h.GetCatalogoAcademico())
-	h.RegisterHandler("GET", "/carreras-resumen", h.GetCarrerasResumen())
+	h.RegisterHandler("GET", "/carreras-resumen", h.GetFullData())
 
 	h.RegisterHandler("GET", "/ping", h.Ping())
 

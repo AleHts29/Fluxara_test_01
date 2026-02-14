@@ -35,7 +35,15 @@ func NewDbService(repo repos.DbReporer) *DbService {
 // }
 
 // arte
-func (db *DbService) GetCarrerasAll(ctx context.Context) ([]domain.Career, error) {
+func (db *DbService) GetFullData(ctx context.Context) ([]domain.CareerFull, error) {
+	fullData, err := db.repo.GetFullData(ctx)
+	if err != nil {
+		return fullData, err
+	}
+
+	return fullData, err
+}
+func (db *DbService) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, error) {
 	carrers, err := db.repo.GetCarrerasAll(ctx)
 	if err != nil {
 		return carrers, err
@@ -43,21 +51,11 @@ func (db *DbService) GetCarrerasAll(ctx context.Context) ([]domain.Career, error
 
 	return carrers, err
 }
-
-func (db *DbService) GetCarrerasResumen(ctx context.Context) ([]domain.CareersResumen, error) {
+func (db *DbService) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
 	carrers, err := db.repo.GetCarrerasResumen(ctx)
 	if err != nil {
 		return carrers, err
 	}
 
 	return carrers, err
-}
-
-func (db *DbService) GetCarrerasByName(ctx context.Context, name string) (domain.Career, error) {
-	career, err := db.repo.GetCarrerasByName(ctx, name)
-	if err != nil {
-		return career, err
-	}
-
-	return career, err
 }

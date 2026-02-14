@@ -27,29 +27,79 @@ type Product struct {
 	CreatedAt  time.Time
 }
 
+// // arte
+// type Career struct {
+// 	ID          int    `json:"id"`
+// 	Name        string `json:"name"`
+// 	Description string `json:"description"`
+// }
+
+// // /carreras/resumen
+// type CareersResumen struct {
+// 	ID          int              `json:"id"`
+// 	Name        string           `json:"name"`
+// 	Description string           `json:"description"`
+// 	Materias    []SubjectResumen `json:"subjects"`
+// }
+
+// type SubjectResumen struct {
+// 	ID          int                `json:"id"`
+// 	Name        string             `json:"name"`
+// 	Description string             `json:"description"`
+// 	Profesores  []ProfessorResumen `json:"professors"`
+// }
+
+// type ProfessorResumen struct {
+// 	ID       int    `json:"id"`
+// 	FullName string `json:"full_name"`
+// 	Email    string `json:"email"`
+// }
+
 // arte
-type Career struct {
-	ID          int    `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
+type CareerFull struct {
+	ID          int           `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Plan        StudyPlan     `json:"plan"`
+	Materias    []SubjectFull `json:"materias"`
 }
 
-// /carreras/resumen
-type CareersResumen struct {
-	ID          int              `json:"id"`
-	Name        string           `json:"name"`
-	Description string           `json:"description"`
-	Materias    []SubjectResumen `json:"subjects"`
+type StudyPlan struct {
+	ID            int     `json:"id"`
+	Name          string  `json:"name"`
+	DurationYears int     `json:"duration_years"`
+	TotalCost     float64 `json:"total_cost"`
 }
 
-type SubjectResumen struct {
-	ID          int                `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Profesores  []ProfessorResumen `json:"professors"`
+type SubjectFull struct {
+	ID          int               `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	WeeklyHours int               `json:"weekly_hours"`
+	Prices      SubjectPrice      `json:"prices"`
+	Slots       SubjectSlots      `json:"slots"`
+	Horarios    []SubjectSchedule `json:"horarios"`
+	Profesores  []Professor       `json:"profesores"`
 }
 
-type ProfessorResumen struct {
+type SubjectSchedule struct {
+	DayOfWeek string `json:"day_of_week"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+	Modality  string `json:"modality"`
+}
+
+type SubjectPrice struct {
+	Monthly    float64 `json:"monthly"`
+	Enrollment float64 `json:"enrollment"`
+}
+
+type SubjectSlots struct {
+	Total     int `json:"total"`
+	Available int `json:"available"`
+}
+
+type Professor struct {
 	ID       int    `json:"id"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`

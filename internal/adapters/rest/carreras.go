@@ -40,19 +40,20 @@ func (h *Handlers) GetCarrerasAll() http.HandlerFunc {
 		json.NewEncoder(w).Encode(careers)
 	}
 }
-func (h *Handlers) GetCarrerasResumen() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.Background()
 
-		careersResumen, err := h.serviceDb.GetCarrerasResumen(ctx)
-		if err != nil {
-			log.Panic("Error en GetCarrerasAll")
-		}
+// func (h *Handlers) GetCarrerasResumen() http.HandlerFunc {
+// 	return func(w http.ResponseWriter, r *http.Request) {
+// 		ctx := context.Background()
 
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
+// 		careersResumen, err := h.serviceDb.GetCarrerasResumen(ctx)
+// 		if err != nil {
+// 			log.Panic("Error en GetCarrerasAll")
+// 		}
 
-		fmt.Printf("Esto es careers-resumen: %+v", careersResumen)
-		json.NewEncoder(w).Encode(careersResumen)
-	}
-}
+// 		w.Header().Set("Content-Type", "application/json")
+// 		w.WriteHeader(http.StatusOK)
+
+// 		fmt.Printf("Esto es careers-resumen: %+v", careersResumen)
+// 		json.NewEncoder(w).Encode(careersResumen)
+// 	}
+// }

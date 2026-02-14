@@ -51,11 +51,12 @@ func (db *DbService) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, e
 
 	return carrers, err
 }
-func (db *DbService) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
-	carrers, err := db.repo.GetCarrerasResumen(ctx)
-	if err != nil {
-		return carrers, err
-	}
 
-	return carrers, err
-}
+// func (db *DbService) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
+// 	carrers, err := db.repo.GetCarrerasResumen(ctx)
+// 	if err != nil {
+// 		return carrers, err
+// 	}
+
+// 	return carrers, err
+// }

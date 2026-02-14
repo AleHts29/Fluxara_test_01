@@ -11,5 +11,5 @@ type DbReporer interface {
 	// arte
 	GetFullData(ctx context.Context) ([]domain.CareerFull, error)
 	GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, error)
-	GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error)
+	// GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error)
 }

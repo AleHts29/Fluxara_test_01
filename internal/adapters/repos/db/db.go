@@ -157,33 +157,25 @@ func connectToDb(config *config.Config) (*sql.DB, error) {
 
 // arte
 func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull, error) {
+
 	query := `
 	SELECT
-		c.id, c.name, c.description,
-		sp.id, sp.name, sp.duration_years, sp.total_cost,
-
-		s.id, s.name, s.description, s.weekly_hours,
-
-		sch.day_of_week, sch.start_time, sch.end_time, sch.modality,
-
-		pr.monthly_price, pr.enrollment_fee,
-
-		sl.total_slots, sl.available_slots,
-
-		p.id, p.full_name, p.email
-
+	    c.id, c.name, c.description, c.duration_years,
+	    sp.id, sp.name,
+	    spp.monthly_price, spp.enrollment_fee,
+	    s.id, s.name, s.description, s.weekly_hours,
+	    sch.day_of_week, sch.start_time, sch.end_time, sch.modality,
+	    sl.total_slots, sl.available_slots,
+	    p.id, p.full_name, p.email
 	FROM careers c
 	JOIN study_plans sp ON sp.career_id = c.id
-
+	LEFT JOIN study_plan_prices spp ON spp.study_plan_id = sp.id
 	JOIN career_subjects cs ON cs.career_id = c.id
 	JOIN subjects s ON s.id = cs.subject_id
-
 	LEFT JOIN subject_schedules sch ON sch.subject_id = s.id
-	LEFT JOIN subject_prices pr ON pr.subject_id = s.id
 	LEFT JOIN subject_slots sl ON sl.subject_id = s.id
 	LEFT JOIN subject_professors spf ON spf.subject_id = s.id
 	LEFT JOIN professors p ON p.id = spf.professor_id
-
 	ORDER BY c.id, s.id;
 	`
 
@@ -198,12 +190,12 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 	for rows.Next() {
 
 		var (
-			careerID               int
+			careerID, duration     int
 			careerName, careerDesc string
 
-			planID, planDuration int
-			planName             string
-			planCost             float64
+			planID              int
+			planName            string
+			monthly, enrollment sql.NullFloat64
 
 			subID, weeklyHours int
 			subName, subDesc   string
@@ -211,7 +203,6 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 			day, modality sql.NullString
 			start, end    sql.NullTime
 
-			monthly, enrollment    sql.NullFloat64
 			totalSlots, availSlots sql.NullInt64
 
 			profID              sql.NullInt64
@@ -219,11 +210,10 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 		)
 
 		err := rows.Scan(
-			&careerID, &careerName, &careerDesc,
-			&planID, &planName, &planDuration, &planCost,
+			&careerID, &careerName, &careerDesc, &duration,
+			&planID, &planName, &monthly, &enrollment,
 			&subID, &subName, &subDesc, &weeklyHours,
 			&day, &start, &end, &modality,
-			&monthly, &enrollment,
 			&totalSlots, &availSlots,
 			&profID, &profName, &profEmail,
 		)
@@ -231,24 +221,23 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 			return nil, err
 		}
 
-		// Carrera
 		carrera, ok := careerMap[careerID]
 		if !ok {
 			carrera = &domain.CareerFull{
-				ID:          careerID,
-				Name:        careerName,
-				Description: careerDesc,
+				ID:            careerID,
+				Name:          careerName,
+				Description:   careerDesc,
+				DurationYears: duration,
 				Plan: domain.StudyPlan{
 					ID:            planID,
 					Name:          planName,
-					DurationYears: planDuration,
-					TotalCost:     planCost,
+					MonthlyPrice:  monthly.Float64,
+					EnrollmentFee: enrollment.Float64,
 				},
 			}
 			careerMap[careerID] = carrera
 		}
 
-		// Materia
 		var materia *domain.SubjectFull
 		for i := range carrera.Materias {
 			if carrera.Materias[i].ID == subID {
@@ -263,10 +252,6 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 				Name:        subName,
 				Description: subDesc,
 				WeeklyHours: weeklyHours,
-				Prices: domain.SubjectPrice{
-					Monthly:    monthly.Float64,
-					Enrollment: enrollment.Float64,
-				},
 				Slots: domain.SubjectSlots{
 					Total:     int(totalSlots.Int64),
 					Available: int(availSlots.Int64),
@@ -276,7 +261,6 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 			materia = &carrera.Materias[len(carrera.Materias)-1]
 		}
 
-		// Horarios
 		if day.Valid {
 			materia.Horarios = append(materia.Horarios, domain.SubjectSchedule{
 				DayOfWeek: day.String,
@@ -286,7 +270,6 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 			})
 		}
 
-		// Profesores
 		if profID.Valid {
 			materia.Profesores = append(materia.Profesores, domain.Professor{
 				ID:       int(profID.Int64),
@@ -339,160 +322,160 @@ func (dPQLDB *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFu
 
 	return carrers, nil
 }
-func (dPQLDB *DbdAdapter) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
-	query := `
-		SELECT
-			c.id, c.name, c.description,
 
-			sp.id, sp.name, sp.duration_years, sp.total_cost,
+// func (dPQLDB *DbdAdapter) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
+// 	query := `
+// 		SELECT
+// 			c.id, c.name, c.description, c.duration_years,
 
-			s.id, s.name, s.description, s.weekly_hours,
+// 			sp.id, sp.name,
+// 			spp.monthly_price, spp.enrollment_fee,
 
-			sch.day_of_week, sch.start_time, sch.end_time, sch.modality,
+// 			s.id, s.name, s.description, s.weekly_hours,
 
-			pr.monthly_price, pr.enrollment_fee,
+// 			sch.day_of_week, sch.start_time, sch.end_time, sch.modality,
 
-			sl.total_slots, sl.available_slots,
+// 			sl.total_slots, sl.available_slots,
 
-			p.id, p.full_name, p.email
+// 			p.id, p.full_name, p.email
 
-		FROM careers c
-		JOIN study_plans sp ON sp.career_id = c.id
+// 		FROM careers c
+// 		JOIN study_plans sp ON sp.career_id = c.id
+// 		LEFT JOIN study_plan_prices spp ON spp.study_plan_id = sp.id
 
-		JOIN career_subjects cs ON cs.career_id = c.id
-		JOIN subjects s ON s.id = cs.subject_id
+// 		JOIN career_subjects cs ON cs.career_id = c.id
+// 		JOIN subjects s ON s.id = cs.subject_id
 
-		LEFT JOIN subject_schedules sch ON sch.subject_id = s.id
-		LEFT JOIN subject_prices pr ON pr.subject_id = s.id
-		LEFT JOIN subject_slots sl ON sl.subject_id = s.id
-		LEFT JOIN subject_professors spf ON spf.subject_id = s.id
-		LEFT JOIN professors p ON p.id = spf.professor_id
+// 		LEFT JOIN subject_schedules sch ON sch.subject_id = s.id
+// 		LEFT JOIN subject_slots sl ON sl.subject_id = s.id
+// 		LEFT JOIN subject_professors spf ON spf.subject_id = s.id
+// 		LEFT JOIN professors p ON p.id = spf.professor_id
 
-		ORDER BY c.id, s.id;
+// 		ORDER BY c.id, s.id;
 
-	`
+// 	`
 
-	rows, err := dPQLDB.db.QueryContext(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+// 	rows, err := dPQLDB.db.QueryContext(ctx, query)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	defer rows.Close()
 
-	carrerasMap := make(map[int]*domain.CareerFull)
+// 	carrerasMap := make(map[int]*domain.CareerFull)
 
-	for rows.Next() {
+// 	for rows.Next() {
 
-		var (
-			careerID               int
-			careerName, careerDesc string
+// 		var (
+// 			careerID               int
+// 			careerName, careerDesc string
 
-			planID, planDuration int
-			planName             string
-			planCost             float64
+// 			planID, planDuration int
+// 			planName             string
+// 			planCost             float64
 
-			subID, weeklyHours int
-			subName, subDesc   string
+// 			subID, weeklyHours int
+// 			subName, subDesc   string
 
-			day, modality sql.NullString
-			start, end    sql.NullTime
+// 			day, modality sql.NullString
+// 			start, end    sql.NullTime
 
-			monthly, enrollment        sql.NullFloat64
-			totalSlots, availableSlots sql.NullInt64
+// 			monthly, enrollment        sql.NullFloat64
+// 			totalSlots, availableSlots sql.NullInt64
 
-			profID              sql.NullInt64
-			profName, profEmail sql.NullString
-		)
+// 			profID              sql.NullInt64
+// 			profName, profEmail sql.NullString
+// 		)
 
-		err := rows.Scan(
-			&careerID, &careerName, &careerDesc,
-			&planID, &planName, &planDuration, &planCost,
-			&subID, &subName, &subDesc, &weeklyHours,
-			&day, &start, &end, &modality,
-			&monthly, &enrollment,
-			&totalSlots, &availableSlots,
-			&profID, &profName, &profEmail,
-		)
-		if err != nil {
-			return nil, err
-		}
+// 		err := rows.Scan(
+// 			&careerID, &careerName, &careerDesc,
+// 			&planID, &planName, &planDuration, &planCost,
+// 			&subID, &subName, &subDesc, &weeklyHours,
+// 			&day, &start, &end, &modality,
+// 			&monthly, &enrollment,
+// 			&totalSlots, &availableSlots,
+// 			&profID, &profName, &profEmail,
+// 		)
+// 		if err != nil {
+// 			return nil, err
+// 		}
 
-		// -------------------------------
-		// Carrera
-		// -------------------------------
-		carrera, ok := carrerasMap[careerID]
-		if !ok {
-			carrera = &domain.CareerFull{
-				ID:          careerID,
-				Name:        careerName,
-				Description: careerDesc,
-				Plan: domain.StudyPlan{
-					ID:            planID,
-					Name:          planName,
-					DurationYears: planDuration,
-					TotalCost:     planCost,
-				},
-			}
-			carrerasMap[careerID] = carrera
-		}
+// 		// -------------------------------
+// 		// Carrera
+// 		// -------------------------------
+// 		carrera, ok := carrerasMap[careerID]
+// 		if !ok {
+// 			carrera = &domain.CareerFull{
+// 				ID:          careerID,
+// 				Name:        careerName,
+// 				Description: careerDesc,
+// 				Plan: domain.StudyPlan{
+// 					ID:            planID,
+// 					Name:          planName,
+// 					DurationYears: planDuration,
+// 					TotalCost:     planCost,
+// 				},
+// 			}
+// 			carrerasMap[careerID] = carrera
+// 		}
 
-		// -------------------------------
-		// Materia
-		// -------------------------------
-		var materia *domain.SubjectFull
-		for i := range carrera.Materias {
-			if carrera.Materias[i].ID == subID {
-				materia = &carrera.Materias[i]
-				break
-			}
-		}
+// 		// -------------------------------
+// 		// Materia
+// 		// -------------------------------
+// 		var materia *domain.SubjectFull
+// 		for i := range carrera.Materias {
+// 			if carrera.Materias[i].ID == subID {
+// 				materia = &carrera.Materias[i]
+// 				break
+// 			}
+// 		}
 
-		if materia == nil {
-			materia = &domain.SubjectFull{
-				ID:          subID,
-				Name:        subName,
-				Description: subDesc,
-				WeeklyHours: weeklyHours,
-				Prices: domain.SubjectPrice{
-					Monthly:    monthly.Float64,
-					Enrollment: enrollment.Float64,
-				},
-				Slots: domain.SubjectSlots{
-					Total:     int(totalSlots.Int64),
-					Available: int(availableSlots.Int64),
-				},
-			}
-			carrera.Materias = append(carrera.Materias, *materia)
-			materia = &carrera.Materias[len(carrera.Materias)-1]
-		}
+// 		if materia == nil {
+// 			materia = &domain.SubjectFull{
+// 				ID:          subID,
+// 				Name:        subName,
+// 				Description: subDesc,
+// 				WeeklyHours: weeklyHours,
+// 				Prices: domain.SubjectPrice{
+// 					Monthly:    monthly.Float64,
+// 					Enrollment: enrollment.Float64,
+// 				},
+// 				Slots: domain.SubjectSlots{
+// 					Total:     int(totalSlots.Int64),
+// 					Available: int(availableSlots.Int64),
+// 				},
+// 			}
+// 			carrera.Materias = append(carrera.Materias, *materia)
+// 			materia = &carrera.Materias[len(carrera.Materias)-1]
+// 		}
 
-		// -------------------------------
-		// Horarios
-		// -------------------------------
-		if day.Valid {
-			materia.Horarios = append(materia.Horarios, domain.SubjectSchedule{
-				DayOfWeek: day.String,
-				StartTime: start.Time.Format("15:04"),
-				EndTime:   end.Time.Format("15:04"),
-				Modality:  modality.String,
-			})
-		}
+// 		// -------------------------------
+// 		// Horarios
+// 		// -------------------------------
+// 		if day.Valid {
+// 			materia.Horarios = append(materia.Horarios, domain.SubjectSchedule{
+// 				DayOfWeek: day.String,
+// 				StartTime: start.Time.Format("15:04"),
+// 				EndTime:   end.Time.Format("15:04"),
+// 				Modality:  modality.String,
+// 			})
+// 		}
 
-		// -------------------------------
-		// Profesores
-		// -------------------------------
-		if profID.Valid {
-			materia.Profesores = append(materia.Profesores, domain.Professor{
-				ID:       int(profID.Int64),
-				FullName: profName.String,
-				Email:    profEmail.String,
-			})
-		}
-	}
+// 		// -------------------------------
+// 		// Profesores
+// 		// -------------------------------
+// 		if profID.Valid {
+// 			materia.Profesores = append(materia.Profesores, domain.Professor{
+// 				ID:       int(profID.Int64),
+// 				FullName: profName.String,
+// 				Email:    profEmail.String,
+// 			})
+// 		}
+// 	}
 
-	result := make([]domain.CareerFull, 0, len(carrerasMap))
-	for _, c := range carrerasMap {
-		result = append(result, *c)
-	}
+// 	result := make([]domain.CareerFull, 0, len(carrerasMap))
+// 	for _, c := range carrerasMap {
+// 		result = append(result, *c)
+// 	}
 
-	return result, nil
-}
+// 	return result, nil
+// }

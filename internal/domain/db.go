@@ -57,18 +57,19 @@ type Product struct {
 
 // arte
 type CareerFull struct {
-	ID          int           `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	Plan        StudyPlan     `json:"plan"`
-	Materias    []SubjectFull `json:"materias"`
+	ID            int           `json:"id"`
+	Name          string        `json:"name"`
+	Description   string        `json:"description"`
+	DurationYears int           `json:"duration_years"`
+	Plan          StudyPlan     `json:"plan"`
+	Materias      []SubjectFull `json:"materias"`
 }
 
 type StudyPlan struct {
 	ID            int     `json:"id"`
 	Name          string  `json:"name"`
-	DurationYears int     `json:"duration_years"`
-	TotalCost     float64 `json:"total_cost"`
+	MonthlyPrice  float64 `json:"monthly_price"`
+	EnrollmentFee float64 `json:"enrollment_fee"`
 }
 
 type SubjectFull struct {
@@ -76,7 +77,6 @@ type SubjectFull struct {
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
 	WeeklyHours int               `json:"weekly_hours"`
-	Prices      SubjectPrice      `json:"prices"`
 	Slots       SubjectSlots      `json:"slots"`
 	Horarios    []SubjectSchedule `json:"horarios"`
 	Profesores  []Professor       `json:"profesores"`

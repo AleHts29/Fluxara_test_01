@@ -18,8 +18,9 @@ var (
 )
 
 type Config struct {
-	Server domain.Server `mapstructure:"server"`
-	Db     domain.Db     `mapstructure:"db"`
+	Server   domain.Server `mapstructure:"server"`
+	Db       domain.Db     `mapstructure:"db"`
+	DbGergal domain.Db     `mapstructure:"dbGergal"`
 }
 
 func Load() {

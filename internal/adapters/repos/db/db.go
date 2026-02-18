@@ -19,7 +19,7 @@ type DbdAdapter struct {
 func NewDbAdapter(configs *config.Config) (*DbdAdapter, error) {
 	conn, err := connectToDb(configs)
 	if err != nil {
-		log.Panic("Error al conectar a db desde adapter")
+		log.Panic("Error al conectar a db Gergal desde adapter")
 		return nil, err
 	}
 
@@ -39,11 +39,11 @@ func connectToDb(config *config.Config) (*sql.DB, error) {
 	for i := 1; i <= config.Db.Retries; i++ {
 		connDB := fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			config.Db.Host, config.Db.Port, config.Db.User,
-			config.Db.Password, config.Db.Name, config.Db.SslMode,
+			config.DbGergal.Host, config.DbGergal.Port, config.DbGergal.User,
+			config.DbGergal.Password, config.DbGergal.Name, config.DbGergal.SslMode,
 		)
 
-		fmt.Printf("[CONN] Esto es connDB %s \n", connDB)
+		fmt.Printf("[CONN] Esto es connDB Gergal %s \n", connDB)
 
 		conn, err = sql.Open("postgres", connDB)
 		if err == nil {
@@ -54,7 +54,7 @@ func connectToDb(config *config.Config) (*sql.DB, error) {
 			break
 		}
 
-		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.Db.Retries, err)
+		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.DbGergal.Retries, err)
 		time.Sleep(20 * time.Second)
 	}
 
@@ -65,95 +65,6 @@ func connectToDb(config *config.Config) (*sql.DB, error) {
 
 	return conn, nil
 }
-
-// func (dPQLDB *DbdAdapter) GetProductsAll(ctx context.Context) ([]domain.Product, error) {
-// 	var products []domain.Product
-
-// 	query := `
-// 		SELECT
-// 			id,
-// 			sku,
-// 			name,
-// 			category,
-// 			price_cents,
-// 			stock,
-// 			is_active,
-// 			created_at
-// 		FROM public.products
-// 		WHERE is_active = true
-// 	`
-
-// 	rows, err := dPQLDB.db.QueryContext(ctx, query)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
-
-// 	for rows.Next() {
-// 		var product domain.Product
-
-// 		err := rows.Scan(
-// 			&product.ID,
-// 			&product.SKU,
-// 			&product.Name,
-// 			&product.Category,
-// 			&product.PriceCents,
-// 			&product.Stock,
-// 			&product.IsActive,
-// 			&product.CreatedAt,
-// 		)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-
-// 		products = append(products, product)
-// 	}
-
-// 	if err := rows.Err(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return products, nil
-// }
-// func (dPQLDB *DbdAdapter) GetProduct(ctx context.Context, id string) (domain.Product, error) {
-// 	var product domain.Product
-
-// 	query := `
-// 		SELECT
-// 			id,
-// 			sku,
-// 			name,
-// 			category,
-// 			price_cents,
-// 			stock,
-// 			is_active,
-// 			created_at
-// 		FROM public.products
-// 		WHERE id = $1
-// 		AND is_active = true
-// 	`
-
-// 	ctx = context.Background()
-// 	err := dPQLDB.db.QueryRowContext(ctx, query, id).Scan(
-// 		&product.ID,
-// 		&product.SKU,
-// 		&product.Name,
-// 		&product.Category,
-// 		&product.PriceCents,
-// 		&product.Stock,
-// 		&product.IsActive,
-// 		&product.CreatedAt,
-// 	)
-
-// 	if err != nil {
-// 		if err == sql.ErrNoRows {
-// 			return product, fmt.Errorf("producto no encontrado")
-// 		}
-// 		return product, err
-// 	}
-
-// 	return product, nil
-// }
 
 // arte
 func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull, error) {

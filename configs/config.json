@@ -20,5 +20,16 @@
         "sslmode": "disable",
         "retries": 3,
         "time_retries": 200 
+    },
+    "dbGergal": {
+        "connection": "railway",
+        "host": "ballast.proxy.rlwy.net",
+        "port": "54304",
+        "name": "gergal",
+        "user": "postgres",
+        "password": "TJiBSQWjyLCoiSfxcQpzGXFkTZfYFOtG",
+        "sslmode": "disable",
+        "retries": 3,
+        "time_retries": 200 
     }
 }

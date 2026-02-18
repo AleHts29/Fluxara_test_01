@@ -1,9 +1,5 @@
 package domain
 
-import (
-	"time"
-)
-
 type Db struct {
 	Connection  string `mapstructure:"connection"`
 	Host        string `mapstructure:"host"`
@@ -16,46 +12,7 @@ type Db struct {
 	TimeRetries int    `mapstructure:"time_retries"`
 }
 
-type Product struct {
-	ID         string
-	SKU        string
-	Name       string
-	Category   string
-	PriceCents int32
-	Stock      int32
-	IsActive   bool
-	CreatedAt  time.Time
-}
-
-// // arte
-// type Career struct {
-// 	ID          int    `json:"id"`
-// 	Name        string `json:"name"`
-// 	Description string `json:"description"`
-// }
-
-// // /carreras/resumen
-// type CareersResumen struct {
-// 	ID          int              `json:"id"`
-// 	Name        string           `json:"name"`
-// 	Description string           `json:"description"`
-// 	Materias    []SubjectResumen `json:"subjects"`
-// }
-
-// type SubjectResumen struct {
-// 	ID          int                `json:"id"`
-// 	Name        string             `json:"name"`
-// 	Description string             `json:"description"`
-// 	Profesores  []ProfessorResumen `json:"professors"`
-// }
-
-// type ProfessorResumen struct {
-// 	ID       int    `json:"id"`
-// 	FullName string `json:"full_name"`
-// 	Email    string `json:"email"`
-// }
-
-// arte
+// abm
 type CareerFull struct {
 	ID            int           `json:"id"`
 	Name          string        `json:"name"`
@@ -103,4 +60,53 @@ type Professor struct {
 	ID       int    `json:"id"`
 	FullName string `json:"full_name"`
 	Email    string `json:"email"`
+}
+
+// gergal
+type Product struct {
+	ID            int                   `json:"id"`
+	Name          string                `json:"name"`
+	Description   string                `json:"description"`
+	Category      string                `json:"category"`
+	Presentations []ProductPresentation `json:"presentations,omitempty"`
+}
+
+type ProductPresentation struct {
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	UnitType  string  `json:"unit_type"`
+	UnitValue float64 `json:"unit_value"`
+	Price     float64 `json:"price"`
+	Stock     float64 `json:"stock,omitempty"`
+}
+
+type DeliveryZone struct {
+	ID            int     `json:"id"`
+	Name          string  `json:"name"`
+	Price         float64 `json:"price"`
+	EstimatedTime string  `json:"estimated_time"`
+}
+
+type Order struct {
+	ID           int         `json:"id"`
+	CustomerID   int         `json:"customer_id"`
+	AddressID    int         `json:"address_id"`
+	Status       string      `json:"status"`
+	Subtotal     float64     `json:"subtotal"`
+	DeliveryCost float64     `json:"delivery_cost"`
+	Total        float64     `json:"total"`
+	Items        []OrderItem `json:"items"`
+}
+
+type OrderItem struct {
+	ProductPresentationID int     `json:"product_presentation_id"`
+	Name                  string  `json:"name"`
+	Quantity              float64 `json:"quantity"`
+	UnitPrice             float64 `json:"unit_price"`
+	Subtotal              float64 `json:"subtotal"`
+}
+
+type PaymentLink struct {
+	OrderID int    `json:"order_id"`
+	URL     string `json:"url"`
 }

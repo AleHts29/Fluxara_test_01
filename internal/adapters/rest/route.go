@@ -3,6 +3,7 @@ package rest
 import (
 	"fluxara/internal/config"
 	serviceDb "fluxara/internal/services/repos/db"
+	serviceDbGergal "fluxara/internal/services/repos/dbGergal"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,24 +17,31 @@ type Server struct {
 }
 
 type Handlers struct {
-	serviceDb *serviceDb.DbService
-	handlers  map[string]map[string]http.HandlerFunc
+	serviceDb       *serviceDb.DbService
+	serviceDbGergal *serviceDbGergal.DbService
+	handlers        map[string]map[string]http.HandlerFunc
 }
 
-func NewHandlers(serviceDb *serviceDb.DbService) *Handlers {
+func NewHandlers(serviceDb *serviceDb.DbService, serviceDbGergal *serviceDbGergal.DbService) *Handlers {
 	h := &Handlers{
-		serviceDb: serviceDb,
-		handlers:  make(map[string]map[string]http.HandlerFunc),
+		serviceDb:       serviceDb,
+		serviceDbGergal: serviceDbGergal,
+		handlers:        make(map[string]map[string]http.HandlerFunc),
 	}
-
-	// registra handlers necesarios - los que se necesiten
-	// h.RegisterHandler("GET", "/products", h.GetProductsAll())
-	// h.RegisterHandler("GET", "/products/{id}", h.GetProduct())
-
-	// artes
-	h.RegisterHandler("GET", "/resumen-full", h.GetFullData())
-	h.RegisterHandler("GET", "/carreras", h.GetCarrerasAll())
 	h.RegisterHandler("GET", "/ping", h.Ping())
+
+	// abm
+	h.RegisterHandler("GET", "/abm/resumen-full", h.GetFullData("abm"))
+	h.RegisterHandler("GET", "/abm/carreras", h.GetCarrerasAll())
+
+	// gergal
+	h.RegisterHandler("GET", "/gergal/catalog-full", h.GetFullData("gergal"))
+	h.RegisterHandler("GET", "/gergal/deivery-zones", h.GetDeliveryZones())
+	// gergal-ordenes-pagos
+	h.RegisterHandler("POST", "/gergal/orders", h.GetDeliveryZones())
+	h.RegisterHandler("POST", "/gergal/orders/previews", h.GetDeliveryZones())
+	h.RegisterHandler("POST", "/gergal/payments/link", h.GetDeliveryZones())
+	h.RegisterHandler("GET", "/gergal/orders/{id}", h.GetDeliveryZones())
 
 	return h
 }

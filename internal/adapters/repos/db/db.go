@@ -306,8 +306,7 @@ func (dPQLDB *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFu
 			&career.ID,
 			&career.Name,
 			&career.Description,
-			&career.Plan,
-			&career.Materias,
+			&career.DurationYears,
 		)
 		if err != nil {
 			return nil, err

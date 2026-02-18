@@ -105,8 +105,3 @@ type OrderItem struct {
 	UnitPrice             float64 `json:"unit_price"`
 	Subtotal              float64 `json:"subtotal"`
 }
-
-type PaymentLink struct {
-	OrderID int    `json:"order_id"`
-	URL     string `json:"url"`
-}

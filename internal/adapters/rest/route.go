@@ -4,6 +4,7 @@ import (
 	"fluxara/internal/config"
 	serviceDb "fluxara/internal/services/repos/db"
 	serviceDbGergal "fluxara/internal/services/repos/dbGergal"
+	serviceMp "fluxara/internal/services/repos/mp"
 	"fmt"
 	"log"
 	"net/http"
@@ -19,13 +20,16 @@ type Server struct {
 type Handlers struct {
 	serviceDb       *serviceDb.DbService
 	serviceDbGergal *serviceDbGergal.DbService
-	handlers        map[string]map[string]http.HandlerFunc
+	serviceMp       *serviceMp.MpService
+
+	handlers map[string]map[string]http.HandlerFunc
 }
 
-func NewHandlers(serviceDb *serviceDb.DbService, serviceDbGergal *serviceDbGergal.DbService) *Handlers {
+func NewHandlers(serviceDb *serviceDb.DbService, serviceDbGergal *serviceDbGergal.DbService, serviceMp *serviceMp.MpService) *Handlers {
 	h := &Handlers{
 		serviceDb:       serviceDb,
 		serviceDbGergal: serviceDbGergal,
+		serviceMp:       serviceMp,
 		handlers:        make(map[string]map[string]http.HandlerFunc),
 	}
 	h.RegisterHandler("GET", "/ping", h.Ping())
@@ -38,10 +42,17 @@ func NewHandlers(serviceDb *serviceDb.DbService, serviceDbGergal *serviceDbGerga
 	h.RegisterHandler("GET", "/gergal/catalog-full", h.GetFullData("gergal"))
 	h.RegisterHandler("GET", "/gergal/deivery-zones", h.GetDeliveryZones())
 	// gergal-ordenes-pagos
-	h.RegisterHandler("POST", "/gergal/orders", h.GetDeliveryZones())
-	h.RegisterHandler("POST", "/gergal/orders/previews", h.GetDeliveryZones())
-	h.RegisterHandler("POST", "/gergal/payments/link", h.GetDeliveryZones())
-	h.RegisterHandler("GET", "/gergal/orders/{id}", h.GetDeliveryZones())
+	h.RegisterHandler("POST", "/gergal/orders", h.CreateOrder())
+	h.RegisterHandler("POST", "/gergal/payments/webhook", h.Mpwebhook())
+	h.RegisterHandler("POST", "/gergal/webhook/mercadopago", h.MercadoPagoWebhook())
+	// payment-status
+	h.RegisterHandler("GET", "/gergal/payments/success", h.PaymentSuccess())
+	h.RegisterHandler("GET", "/gergal/payments/failure", h.PaymentFailure())
+	h.RegisterHandler("GET", "/gergal/payments/pending", h.PaymentPending())
+
+	// h.RegisterHandler("POST", "/gergal/payments/link", h.GetDeliveryZones())
+	// h.RegisterHandler("POST", "/gergal/orders/previews", h.GetDeliveryZones())
+	// h.RegisterHandler("GET", "/gergal/orders/{id}", h.GetDeliveryZones())
 
 	return h
 }

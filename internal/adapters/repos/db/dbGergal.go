@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fluxara/internal/config"
 	"fluxara/internal/domain"
 	"fmt"
@@ -66,6 +67,7 @@ func connectToDbGergal(config *config.Config) (*sql.DB, error) {
 	return conn, nil
 }
 
+// get
 func (d *DbdAdapter) GetCatalog(ctx context.Context) ([]domain.Product, error) {
 	query := `
 	SELECT
@@ -160,4 +162,134 @@ func (d *DbdAdapter) GetDeliveryZones(ctx context.Context) ([]domain.DeliveryZon
 	}
 
 	return zones, nil
+}
+
+// post
+func (d *DbdAdapter) CreateOrder(ctx context.Context, req domain.CreateOrderRequest) (*domain.Order, error) {
+	fmt.Printf("Create Order -.------------- \n")
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback()
+
+	var subtotal float64
+	var items []domain.OrderItem
+
+	for _, it := range req.Items {
+		var name string
+		var price float64
+		fmt.Printf("For Item -.------------- \n")
+		err := tx.QueryRowContext(ctx, `
+			SELECT pp.name, pp.price
+			FROM product_presentations pp
+			WHERE pp.id = $1 AND pp.active = true
+		`, it.ProductPresentationID).Scan(&name, &price)
+		if err != nil {
+			return nil, err
+		}
+
+		if err := d.reserveStock(ctx, tx, it.ProductPresentationID, it.Quantity); err != nil {
+			return nil, err
+		}
+
+		sub := price * it.Quantity
+		subtotal += sub
+
+		items = append(items, domain.OrderItem{
+			ProductPresentationID: it.ProductPresentationID,
+			Name:                  name,
+			Quantity:              it.Quantity,
+			UnitPrice:             price,
+			Subtotal:              sub,
+		})
+	}
+
+	delivery, err := d.getDeliveryCost(ctx, tx, req.AddressID)
+	if err != nil {
+		return nil, err
+	}
+
+	total := subtotal + delivery
+
+	fmt.Printf("subtotal + deliverys -.------------- \n")
+
+	var orderID int
+	err = tx.QueryRowContext(ctx, `
+		INSERT INTO orders (customer_id, address_id, status, subtotal, delivery_cost, total)
+		VALUES ($1,$2,'payment_pending',$3,$4,$5)
+		RETURNING id
+	`, req.CustomerID, req.AddressID, subtotal, delivery, total).
+		Scan(&orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, it := range items {
+		_, err := tx.ExecContext(ctx, `
+			INSERT INTO order_items
+			(order_id, product_presentation_id, quantity, unit_price, subtotal)
+			VALUES ($1,$2,$3,$4,$5)
+		`, orderID, it.ProductPresentationID, it.Quantity, it.UnitPrice, it.Subtotal)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return nil, err
+	}
+
+	return &domain.Order{
+		ID:           orderID,
+		CustomerID:   req.CustomerID,
+		AddressID:    req.AddressID,
+		Status:       "payment_pending",
+		Subtotal:     subtotal,
+		DeliveryCost: delivery,
+		Total:        total,
+		Items:        items,
+	}, nil
+}
+
+// aux
+func (d *DbdAdapter) reserveStock(ctx context.Context, tx *sql.Tx, presID int, qty float64) error {
+	res, err := tx.ExecContext(ctx, `
+		UPDATE stock
+		SET reserved_quantity = reserved_quantity + $1,
+		    updated_at = now()
+		WHERE product_presentation_id = $2
+		  AND total_quantity - reserved_quantity >= $1
+	`, qty, presID)
+
+	if err != nil {
+		return err
+	}
+
+	rows, _ := res.RowsAffected()
+	if rows == 0 {
+		return errors.New("stock insuficiente")
+	}
+	return nil
+}
+
+func (d *DbdAdapter) getDeliveryCost(ctx context.Context, tx *sql.Tx, addressID int) (float64, error) {
+	var cost float64
+	fmt.Printf("getDeliveryCost -.------------- \n")
+	err := tx.QueryRowContext(ctx, `
+		SELECT dz.price
+		FROM customer_addresses ca
+		INNER JOIN delivery_zones dz ON dz.id = ca.zone_id
+		WHERE ca.id = $1`, addressID).Scan(&cost)
+
+	return cost, err
+}
+
+func (d *DbdAdapter) MarkOrderPaid(ctx context.Context, orderID int) error {
+	_, err := d.db.ExecContext(ctx, `
+		UPDATE orders
+		SET status = 'paid'
+		WHERE id = $1
+	`, orderID)
+	return err
 }

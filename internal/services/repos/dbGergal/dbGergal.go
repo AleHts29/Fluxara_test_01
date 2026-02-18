@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"fluxara/internal/domain"
 	"fluxara/internal/ports/repos"
 )
@@ -32,4 +33,18 @@ func (db *DbService) GetDeliveryZones(ctx context.Context) ([]domain.DeliveryZon
 	}
 
 	return deliveryZones, err
+}
+
+func (db *DbService) CreateOrder(ctx context.Context, req domain.CreateOrderRequest) (*domain.Order, error) {
+	if len(req.Items) == 0 {
+		return nil, errors.New("la orden debe tener al menos un item")
+	}
+
+	for _, it := range req.Items {
+		if it.Quantity <= 0 {
+			return nil, errors.New("cantidad inválida")
+		}
+	}
+
+	return db.repo.CreateOrder(ctx, req)
 }

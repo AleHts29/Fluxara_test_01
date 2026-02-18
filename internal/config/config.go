@@ -18,9 +18,10 @@ var (
 )
 
 type Config struct {
-	Server   domain.Server `mapstructure:"server"`
-	Db       domain.Db     `mapstructure:"db"`
-	DbGergal domain.Db     `mapstructure:"dbGergal"`
+	Server      domain.Server      `mapstructure:"server"`
+	MercadoPago domain.MercadoPago `mapstructure:"mercadoPago"`
+	Db          domain.Db          `mapstructure:"db"`
+	DbGergal    domain.Db          `mapstructure:"dbGergal"`
 }
 
 func Load() {
@@ -43,6 +44,9 @@ func Load() {
 					KeyFile:             viper.GetString("SERVER_TLS_KEY_FILE"),
 					RedirectHTTPToHTTPS: viper.GetBool("SERVER_TLS_REDIRECT_HTTP_TO_HTTPS"),
 				},
+			},
+			MercadoPago: domain.MercadoPago{
+				Token: viper.GetString("MP_TOKEN"),
 			},
 			Db: domain.Db{
 				Connection:  viper.GetString("DB_CONNECTION"),

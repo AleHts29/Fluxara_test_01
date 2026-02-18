@@ -286,195 +286,262 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 
 	return result, nil
 }
-func (dPQLDB *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, error) {
-	var carrers []domain.CareerFull
 
+func (d *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, error) {
+	careers, err := d.getCareersBase(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for i := range careers {
+		subjects, err := d.getSubjectsByCareer(ctx, careers[i].ID)
+		if err != nil {
+			return nil, err
+		}
+
+		for j := range subjects {
+			slots, err := d.getSubjectSlots(ctx, subjects[j].ID)
+			if err != nil {
+				return nil, err
+			}
+
+			horarios, err := d.getSubjectSchedules(ctx, subjects[j].ID)
+			if err != nil {
+				return nil, err
+			}
+
+			profesores, err := d.getSubjectProfesors(ctx, subjects[j].ID)
+			if err != nil {
+				return nil, err
+			}
+
+			subjects[j].Slots = slots
+			subjects[j].Horarios = horarios
+			subjects[j].Profesores = profesores
+		}
+
+		careers[i].Materias = subjects
+	}
+
+	return careers, nil
+}
+
+// aux
+func (d *DbdAdapter) getCareersBase(ctx context.Context) ([]domain.CareerFull, error) {
 	query := `
-		SELECT * FROM public.careers
+		SELECT
+			c.id,
+			c.name,
+			c.description,
+			c.duration_years,
+
+			sp.id,
+			sp.name,
+
+			spp.monthly_price,
+			spp.enrollment_fee
+		FROM careers c
+		LEFT JOIN study_plans sp
+			ON sp.career_id = c.id
+		LEFT JOIN study_plan_prices spp
+			ON spp.study_plan_id = sp.id
+		ORDER BY c.id;
 	`
 
-	rows, err := dPQLDB.db.QueryContext(ctx, query)
+	rows, err := d.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var careers []domain.CareerFull
+
 	for rows.Next() {
-		var career domain.CareerFull
+		var c domain.CareerFull
+		var plan domain.StudyPlan
+
+		var planID sql.NullInt64
+		var planName sql.NullString
+		var monthly sql.NullFloat64
+		var enrollment sql.NullFloat64
 
 		err := rows.Scan(
-			&career.ID,
-			&career.Name,
-			&career.Description,
-			&career.DurationYears,
+			&c.ID,
+			&c.Name,
+			&c.Description,
+			&c.DurationYears,
+
+			&planID,
+			&planName,
+
+			&monthly,
+			&enrollment,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		carrers = append(carrers, career)
+		if planID.Valid {
+			plan.ID = int(planID.Int64)
+			plan.Name = planName.String
+
+			if monthly.Valid {
+				plan.MonthlyPrice = monthly.Float64
+			}
+			if enrollment.Valid {
+				plan.EnrollmentFee = enrollment.Float64
+			}
+
+			c.Plan = plan
+		}
+
+		careers = append(careers, c)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return carrers, nil
+	return careers, nil
 }
 
-// func (dPQLDB *DbdAdapter) GetCarrerasResumen(ctx context.Context) ([]domain.CareerFull, error) {
-// 	query := `
-// 		SELECT
-// 			c.id, c.name, c.description, c.duration_years,
+func (d *DbdAdapter) getSubjectsByCareer(ctx context.Context, careerID int) ([]domain.SubjectFull, error) {
+	query := `
+		SELECT
+			s.id,
+			s.name,
+			s.description,
+			s.weekly_hours
+		FROM subjects s
+		JOIN career_subjects cs
+			ON cs.subject_id = s.id
+		WHERE cs.career_id = $1
+		ORDER BY s.id;
+	`
 
-// 			sp.id, sp.name,
-// 			spp.monthly_price, spp.enrollment_fee,
+	rows, err := d.db.QueryContext(ctx, query, careerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-// 			s.id, s.name, s.description, s.weekly_hours,
+	var subjects []domain.SubjectFull
 
-// 			sch.day_of_week, sch.start_time, sch.end_time, sch.modality,
+	for rows.Next() {
+		var s domain.SubjectFull
 
-// 			sl.total_slots, sl.available_slots,
+		err := rows.Scan(
+			&s.ID,
+			&s.Name,
+			&s.Description,
+			&s.WeeklyHours,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-// 			p.id, p.full_name, p.email
+		subjects = append(subjects, s)
+	}
 
-// 		FROM careers c
-// 		JOIN study_plans sp ON sp.career_id = c.id
-// 		LEFT JOIN study_plan_prices spp ON spp.study_plan_id = sp.id
+	return subjects, nil
+}
 
-// 		JOIN career_subjects cs ON cs.career_id = c.id
-// 		JOIN subjects s ON s.id = cs.subject_id
+func (d *DbdAdapter) getSubjectSlots(ctx context.Context, subjectID int) (domain.SubjectSlots, error) {
+	query := `
+		SELECT
+			total_slots,
+			available_slots
+		FROM subject_slots
+		WHERE subject_id = $1;
+	`
 
-// 		LEFT JOIN subject_schedules sch ON sch.subject_id = s.id
-// 		LEFT JOIN subject_slots sl ON sl.subject_id = s.id
-// 		LEFT JOIN subject_professors spf ON spf.subject_id = s.id
-// 		LEFT JOIN professors p ON p.id = spf.professor_id
+	var slots domain.SubjectSlots
 
-// 		ORDER BY c.id, s.id;
+	err := d.db.QueryRowContext(ctx, query, subjectID).Scan(
+		&slots.Total,
+		&slots.Available,
+	)
 
-// 	`
+	if err == sql.ErrNoRows {
+		return slots, nil
+	}
+	if err != nil {
+		return slots, err
+	}
 
-// 	rows, err := dPQLDB.db.QueryContext(ctx, query)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	defer rows.Close()
+	return slots, nil
+}
 
-// 	carrerasMap := make(map[int]*domain.CareerFull)
+func (d *DbdAdapter) getSubjectSchedules(ctx context.Context, subjectID int) ([]domain.SubjectSchedule, error) {
+	query := `
+		SELECT
+			day_of_week,
+			start_time,
+			end_time,
+			modality
+		FROM subject_schedules
+		WHERE subject_id = $1
+		ORDER BY day_of_week, start_time;
+	`
 
-// 	for rows.Next() {
+	rows, err := d.db.QueryContext(ctx, query, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-// 		var (
-// 			careerID               int
-// 			careerName, careerDesc string
+	var schedules []domain.SubjectSchedule
 
-// 			planID, planDuration int
-// 			planName             string
-// 			planCost             float64
+	for rows.Next() {
+		var s domain.SubjectSchedule
 
-// 			subID, weeklyHours int
-// 			subName, subDesc   string
+		err := rows.Scan(
+			&s.DayOfWeek,
+			&s.StartTime,
+			&s.EndTime,
+			&s.Modality,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-// 			day, modality sql.NullString
-// 			start, end    sql.NullTime
+		schedules = append(schedules, s)
+	}
 
-// 			monthly, enrollment        sql.NullFloat64
-// 			totalSlots, availableSlots sql.NullInt64
+	return schedules, nil
+}
 
-// 			profID              sql.NullInt64
-// 			profName, profEmail sql.NullString
-// 		)
+func (d *DbdAdapter) getSubjectProfesors(ctx context.Context, subjectID int) ([]domain.Professor, error) {
+	query := `
+		SELECT
+			p.id,
+			p.full_name,
+			p.email
+		FROM professors p
+		JOIN subject_professors sp
+			ON sp.professor_id = p.id
+		WHERE sp.subject_id = $1
+		ORDER BY full_name;
+	`
 
-// 		err := rows.Scan(
-// 			&careerID, &careerName, &careerDesc,
-// 			&planID, &planName, &planDuration, &planCost,
-// 			&subID, &subName, &subDesc, &weeklyHours,
-// 			&day, &start, &end, &modality,
-// 			&monthly, &enrollment,
-// 			&totalSlots, &availableSlots,
-// 			&profID, &profName, &profEmail,
-// 		)
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	rows, err := d.db.QueryContext(ctx, query, subjectID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-// 		// -------------------------------
-// 		// Carrera
-// 		// -------------------------------
-// 		carrera, ok := carrerasMap[careerID]
-// 		if !ok {
-// 			carrera = &domain.CareerFull{
-// 				ID:          careerID,
-// 				Name:        careerName,
-// 				Description: careerDesc,
-// 				Plan: domain.StudyPlan{
-// 					ID:            planID,
-// 					Name:          planName,
-// 					DurationYears: planDuration,
-// 					TotalCost:     planCost,
-// 				},
-// 			}
-// 			carrerasMap[careerID] = carrera
-// 		}
+	var profs []domain.Professor
 
-// 		// -------------------------------
-// 		// Materia
-// 		// -------------------------------
-// 		var materia *domain.SubjectFull
-// 		for i := range carrera.Materias {
-// 			if carrera.Materias[i].ID == subID {
-// 				materia = &carrera.Materias[i]
-// 				break
-// 			}
-// 		}
+	for rows.Next() {
+		var p domain.Professor
 
-// 		if materia == nil {
-// 			materia = &domain.SubjectFull{
-// 				ID:          subID,
-// 				Name:        subName,
-// 				Description: subDesc,
-// 				WeeklyHours: weeklyHours,
-// 				Prices: domain.SubjectPrice{
-// 					Monthly:    monthly.Float64,
-// 					Enrollment: enrollment.Float64,
-// 				},
-// 				Slots: domain.SubjectSlots{
-// 					Total:     int(totalSlots.Int64),
-// 					Available: int(availableSlots.Int64),
-// 				},
-// 			}
-// 			carrera.Materias = append(carrera.Materias, *materia)
-// 			materia = &carrera.Materias[len(carrera.Materias)-1]
-// 		}
+		err := rows.Scan(
+			&p.ID,
+			&p.FullName,
+			&p.Email,
+		)
+		if err != nil {
+			return nil, err
+		}
 
-// 		// -------------------------------
-// 		// Horarios
-// 		// -------------------------------
-// 		if day.Valid {
-// 			materia.Horarios = append(materia.Horarios, domain.SubjectSchedule{
-// 				DayOfWeek: day.String,
-// 				StartTime: start.Time.Format("15:04"),
-// 				EndTime:   end.Time.Format("15:04"),
-// 				Modality:  modality.String,
-// 			})
-// 		}
+		profs = append(profs, p)
+	}
 
-// 		// -------------------------------
-// 		// Profesores
-// 		// -------------------------------
-// 		if profID.Valid {
-// 			materia.Profesores = append(materia.Profesores, domain.Professor{
-// 				ID:       int(profID.Int64),
-// 				FullName: profName.String,
-// 				Email:    profEmail.String,
-// 			})
-// 		}
-// 	}
-
-// 	result := make([]domain.CareerFull, 0, len(carrerasMap))
-// 	for _, c := range carrerasMap {
-// 		result = append(result, *c)
-// 	}
-
-// 	return result, nil
-// }
+	return profs, nil
+}

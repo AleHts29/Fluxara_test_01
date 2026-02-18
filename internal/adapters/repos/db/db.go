@@ -294,30 +294,9 @@ func (d *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, e
 	}
 
 	for i := range careers {
-		subjects, err := d.getSubjectsByCareer(ctx, careers[i].ID)
+		subjects, err := d.getSubjectsBasicByCareer(ctx, careers[i].ID)
 		if err != nil {
 			return nil, err
-		}
-
-		for j := range subjects {
-			slots, err := d.getSubjectSlots(ctx, subjects[j].ID)
-			if err != nil {
-				return nil, err
-			}
-
-			horarios, err := d.getSubjectSchedules(ctx, subjects[j].ID)
-			if err != nil {
-				return nil, err
-			}
-
-			profesores, err := d.getSubjectProfesors(ctx, subjects[j].ID)
-			if err != nil {
-				return nil, err
-			}
-
-			subjects[j].Slots = slots
-			subjects[j].Horarios = horarios
-			subjects[j].Profesores = profesores
 		}
 
 		careers[i].Materias = subjects
@@ -327,6 +306,46 @@ func (d *DbdAdapter) GetCarrerasAll(ctx context.Context) ([]domain.CareerFull, e
 }
 
 // aux
+func (d *DbdAdapter) getSubjectsBasicByCareer(ctx context.Context, careerID int) ([]domain.SubjectFull, error) {
+	query := `
+		SELECT
+			s.id,
+			s.name,
+			s.description
+		FROM subjects s
+		JOIN career_subjects cs
+			ON cs.subject_id = s.id
+		WHERE cs.career_id = $1
+		ORDER BY s.id;
+	`
+
+	rows, err := d.db.QueryContext(ctx, query, careerID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjects []domain.SubjectFull
+
+	for rows.Next() {
+		var s domain.SubjectFull
+
+		err := rows.Scan(
+			&s.ID,
+			&s.Name,
+			&s.Description,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// WeeklyHours, Slots, Horarios, Profesores quedan vacíos
+		subjects = append(subjects, s)
+	}
+
+	return subjects, nil
+}
+
 func (d *DbdAdapter) getCareersBase(ctx context.Context) ([]domain.CareerFull, error) {
 	query := `
 		SELECT

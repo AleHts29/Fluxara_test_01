@@ -252,7 +252,7 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 				Name:        subName,
 				Description: subDesc,
 				WeeklyHours: weeklyHours,
-				Slots: domain.SubjectSlots{
+				Slots: &domain.SubjectSlots{
 					Total:     int(totalSlots.Int64),
 					Available: int(availSlots.Int64),
 				},

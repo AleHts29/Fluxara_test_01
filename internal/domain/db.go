@@ -76,10 +76,10 @@ type SubjectFull struct {
 	ID          int               `json:"id"`
 	Name        string            `json:"name"`
 	Description string            `json:"description"`
-	WeeklyHours int               `json:"weekly_hours"`
-	Slots       SubjectSlots      `json:"slots"`
-	Horarios    []SubjectSchedule `json:"horarios"`
-	Profesores  []Professor       `json:"profesores"`
+	WeeklyHours int               `json:"weekly_hours,omitempty"`
+	Slots       *SubjectSlots     `json:"slots,omitempty"`
+	Horarios    []SubjectSchedule `json:"horarios,omitempty"`
+	Profesores  []Professor       `json:"profesores,omitempty"`
 }
 
 type SubjectSchedule struct {

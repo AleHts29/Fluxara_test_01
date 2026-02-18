@@ -55,6 +55,17 @@ func Load() {
 				Retries:     viper.GetInt("DB_RETRIES"),
 				TimeRetries: viper.GetInt("DB_TIME_RETRIES"),
 			},
+			DbGergal: domain.Db{
+				Connection:  viper.GetString("DB_GERGAL_CONNECTION"),
+				Host:        viper.GetString("DB_GERGAL_HOST"),
+				Port:        viper.GetString("DB_GERGAL_PORT"),
+				User:        viper.GetString("DB_GERGAL_USER"),
+				Password:    viper.GetString("DB_GERGAL_PASSWORD"),
+				Name:        viper.GetString("DB_GERGAL_NAME"),
+				SslMode:     viper.GetString("DB_GERGAL_SSLMODE"),
+				Retries:     viper.GetInt("DB_GERGAL_RETRIES"),
+				TimeRetries: viper.GetInt("DB_GERGAL_TIME_RETRIES"),
+			},
 		}
 
 		fmt.Printf("ESTO ES CFG DESDE CONFIG: %+v\n\n", &cfg)

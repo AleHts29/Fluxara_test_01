@@ -35,12 +35,13 @@ func newDbPQLDB(db *sql.DB) *DbdAdapter {
 func connectToDb(config *config.Config) (*sql.DB, error) {
 	var conn *sql.DB
 	var err error
+	var connDB string
 
 	for i := 1; i <= config.Db.Retries; i++ {
-		connDB := fmt.Sprintf(
+		connDB = fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			config.DbGergal.Host, config.DbGergal.Port, config.DbGergal.User,
-			config.DbGergal.Password, config.DbGergal.Name, config.DbGergal.SslMode,
+			config.Db.Host, config.Db.Port, config.Db.User,
+			config.Db.Password, config.Db.Name, config.Db.SslMode,
 		)
 
 		fmt.Printf("[CONN] Esto es connDB Gergal %s \n", connDB)
@@ -54,7 +55,7 @@ func connectToDb(config *config.Config) (*sql.DB, error) {
 			break
 		}
 
-		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.DbGergal.Retries, err)
+		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.Db.Retries, err)
 		time.Sleep(20 * time.Second)
 	}
 
@@ -92,6 +93,8 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 
 	rows, err := dPQLDB.db.QueryContext(ctx, query)
 	if err != nil {
+		fmt.Println("Estoy aca 1")
+		fmt.Println("Error : %s\n", err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -129,6 +132,7 @@ func (dPQLDB *DbdAdapter) GetFullData(ctx context.Context) ([]domain.CareerFull,
 			&profID, &profName, &profEmail,
 		)
 		if err != nil {
+			fmt.Println("Estoy aca 2")
 			return nil, err
 		}
 

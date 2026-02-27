@@ -17,7 +17,7 @@ type DbdAdapterGergal struct {
 }
 
 func NewDbAdapterGergal(configs *config.Config) (*DbdAdapter, error) {
-	conn, err := connectToDb(configs)
+	conn, err := connectToDbGergal(configs)
 	if err != nil {
 		log.Panic("Error al conectar a db desde adapter")
 		return nil, err
@@ -36,11 +36,11 @@ func connectToDbGergal(config *config.Config) (*sql.DB, error) {
 	var conn *sql.DB
 	var err error
 
-	for i := 1; i <= config.Db.Retries; i++ {
+	for i := 1; i <= config.DbGergal.Retries; i++ {
 		connDB := fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-			config.Db.Host, config.Db.Port, config.Db.User,
-			config.Db.Password, config.Db.Name, config.Db.SslMode,
+			config.DbGergal.Host, config.DbGergal.Port, config.DbGergal.User,
+			config.DbGergal.Password, config.DbGergal.Name, config.DbGergal.SslMode,
 		)
 
 		fmt.Printf("[CONN] Esto es connDB %s \n", connDB)
@@ -54,7 +54,7 @@ func connectToDbGergal(config *config.Config) (*sql.DB, error) {
 			break
 		}
 
-		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.Db.Retries, err)
+		log.Printf("retry %d/%d: error conectando a DB: %v", i, config.DbGergal.Retries, err)
 		time.Sleep(20 * time.Second)
 	}
 

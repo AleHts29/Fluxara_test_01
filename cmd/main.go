@@ -24,7 +24,7 @@ func main() {
 
 	serviceDb := serviceDb.NewDbService(adapterDb)
 
-	adapterDbGergal, err := db.NewDbAdapter(config.Get())
+	adapterDbGergal, err := db.NewDbAdapterGergal(config.Get())
 	if err != nil {
 		log.Panic("Error creando el adapter Gergal desde main")
 		os.Exit(2)
